@@ -4,10 +4,12 @@ const {
   getFrameworkName,
   normalizeStories,
 } = require("@storybook/core-common");
+const { logger } = require("@storybook/node-logger");
+const { promise: glob } = require("glob-promise");
 
 const absoluteToSpecifier = (generatedEntries, abs) =>
   "./" + path.relative(generatedEntries, abs);
-  
+
 module.exports.generatePreviewModern = async function generatePreviewModern(
   options,
   generatedEntries
@@ -28,7 +30,6 @@ module.exports.generatePreviewModern = async function generatePreviewModern(
     ),
   ].filter(Boolean);
 
-  // eslint-disable-next-line @typescript-eslint/no-shadow
   const generateHMRHandler = (frameworkName) => {
     // Web components are not compatible with HMR, so disable HMR, reload page instead.
     if (frameworkName === "@storybook/web-components-vite") {
@@ -62,13 +63,29 @@ module.exports.generatePreviewModern = async function generatePreviewModern(
    * and the HMR implementation has been tweaked to work with Vite.
    * @todo Inline variable and remove `noinspection`
    */
-  // import { importFn } from '${virtualStoriesFile}';
   const code = `
   import { composeConfigs, PreviewWeb, ClientApi } from '@storybook/preview-api';
   
-  ${await generateAddonSetupCode()}
+  // generateAddonSetupCode
+  import { createChannel as createPostMessageChannel } from '@storybook/channel-postmessage';
+  import { createChannel as createWebSocketChannel } from '@storybook/channel-websocket';
+  import { addons } from '@storybook/preview-api';
 
-  ${await generateImportFnScriptCode(options, generatedEntries)}
+  const channel = createPostMessageChannel({ page: 'preview' });
+  addons.setChannel(channel);
+  window.__STORYBOOK_ADDONS_CHANNEL__ = channel;
+
+  const { SERVER_CHANNEL_URL } = globalThis;
+  if (SERVER_CHANNEL_URL) {
+    const serverChannel = createWebSocketChannel({ url: SERVER_CHANNEL_URL });
+    addons.setServerChannel(serverChannel);
+    window.__STORYBOOK_SERVER_CHANNEL__ = serverChannel;
+  }
+
+  ${
+    // import { importFn } from '${virtualStoriesFile}';
+    await generateImportFnScriptCode(options, generatedEntries)
+  }
 
   const getProjectAnnotations = async () => {
     const configs = await Promise.all([${relativePreviewAnnotations
@@ -85,7 +102,7 @@ module.exports.generatePreviewModern = async function generatePreviewModern(
 
   preview.initialize({ importFn, getProjectAnnotations });
   
-  `.trim();
+  `;
   // ${generateHMRHandler(frameworkName)};
   return code;
 };
@@ -118,29 +135,6 @@ function processPreviewAnnotation(path) {
 
   return /*slash*/ path;
 }
-
-async function generateAddonSetupCode() {
-  return `
-    import { createChannel as createPostMessageChannel } from '@storybook/channel-postmessage';
-    import { createChannel as createWebSocketChannel } from '@storybook/channel-websocket';
-    import { addons } from '@storybook/preview-api';
-
-    const channel = createPostMessageChannel({ page: 'preview' });
-    addons.setChannel(channel);
-    window.__STORYBOOK_ADDONS_CHANNEL__ = channel;
-
-    const { SERVER_CHANNEL_URL } = globalThis;
-    if (SERVER_CHANNEL_URL) {
-      const serverChannel = createWebSocketChannel({ url: SERVER_CHANNEL_URL });
-      addons.setServerChannel(serverChannel);
-      window.__STORYBOOK_SERVER_CHANNEL__ = serverChannel;
-    }
-  `.trim();
-}
-
-const { logger } = require("@storybook/node-logger");
-
-const { promise: glob } = require("glob-promise");
 
 /**
  * This file is largely based on https://github.com/storybookjs/storybook/blob/d1195cbd0c61687f1720fefdb772e2f490a46584/lib/core-common/src/utils/to-importFn.ts
