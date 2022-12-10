@@ -7,7 +7,12 @@ const {
 } = require("@storybook/core-common");
 const fs = require("fs");
 
-const { generateIframeScriptCode } = require("forked-storybook-builder-vite/src/codegen-iframe-script.js");
+const { generateIframeModern } = require("./gen-iframe-modern.js");
+const { generateIframe } = require("./gen-iframe.js");
+const { generatePreviewModern } = require("./gen-preview-modern.js");
+const { generatePreview } = require("./gen-preview.js");
+
+const generatedEntries = path.join(__dirname, "generated-entries");
 
 exports.start = async function ({ options, router }) {
   let parcel = await createParcel(options, true);
@@ -70,14 +75,32 @@ exports.build = async function ({ options }) {
 
 exports.corePresets = [];
 exports.previewPresets = [];
-exports.bail = () => {};
+exports.bail = async () => {};
 
 async function createParcel(options, isDev = false) {
-  await generateHTML(options);
-  await generateJS(options);
+  fs.mkdirSync(generatedEntries, { recursive: true });
+  if (options.features?.storyStoreV7) {
+    fs.writeFileSync(
+      path.join(generatedEntries, "iframe.html"),
+      await generateIframeModern(options, generatedEntries)
+    );
+    fs.writeFileSync(
+      path.join(generatedEntries, "preview.js"),
+      await generatePreviewModern(options, generatedEntries)
+    );
+  } else {
+    fs.writeFileSync(
+      path.join(generatedEntries, "iframe.html"),
+      await generateIframe(options, generatedEntries)
+    );
+    fs.writeFileSync(
+      path.join(generatedEntries, "preview.js"),
+      await generatePreview(options, generatedEntries)
+    );
+  }
 
   return new Parcel({
-    entries: path.join(__dirname, "iframe.html"),
+    entries: path.join(generatedEntries, "iframe.html"),
     config: path.resolve(options.configDir, ".parcelrc"),
     mode: isDev ? "development" : "production",
     serveOptions: isDev
@@ -102,170 +125,4 @@ async function createParcel(options, isDev = false) {
       shouldScopeHoist: false, // TODO
     },
   });
-}
-
-async function generateHTML(options, overlayFS) {
-  const { configType, features, framework, presets, serverChannelUrl, title } =
-    options;
-  const headHtmlSnippet = await presets.apply("previewHead");
-  const bodyHtmlSnippet = await presets.apply("previewBody");
-  const logLevel = await presets.apply("logLevel", undefined);
-  const frameworkOptions = await presets.apply(`${framework}Options`, {});
-  const coreOptions = await presets.apply("core");
-  const stories = normalizeStories(
-    await options.presets.apply("stories", [], options),
-    {
-      configDir: options.configDir,
-      workingDir: process.cwd(),
-    }
-  ).map((specifier) => ({
-    ...specifier,
-    importPathMatcher: specifier.importPathMatcher.source,
-  }));
-
-  let html = `
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="utf-8" />
-      <title>${title || "Storybook"}</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <script>
-        window.CONFIG_TYPE = '${configType || ""}';
-        window.LOGLEVEL = '${logLevel || ""}';
-        window.FRAMEWORK_OPTIONS = ${JSON.stringify(frameworkOptions || {})};
-        window.CHANNEL_OPTIONS = ${JSON.stringify(
-          coreOptions && coreOptions.channelOptions
-            ? coreOptions.channelOptions
-            : {}
-        )};
-        window.FEATURES = ${JSON.stringify(features || {})};
-        window.STORIES = ${JSON.stringify(stories || {})};
-        window.SERVER_CHANNEL_URL = '${serverChannelUrl || ""}';
-      </script>
-      ${headHtmlSnippet || ""}
-      <style>
-        #root[hidden],
-        #docs-root[hidden] {
-          display: none !important;
-        }
-      </style>
-    </head>
-    <body>
-      ${bodyHtmlSnippet || ""}
-      <div id="root"></div>
-      <div id="docs-root"></div>
-      <script src="preview.js" type="module"></script>
-    </body>
-  </html>
-  `;
-
-  fs.writeFileSync(path.join(__dirname, "iframe.html"), html);
-}
-
-async function generateJS(options, overlayFS) {
-  // let { presets } = options;
-  // let configs = [
-  //   ...(await presets.apply("config", [], options)),
-  //   loadPreviewOrConfigFile(options),
-  // ].filter(Boolean);
-  // let stories = normalizeStories(await presets.apply("stories", [], options), {
-  //   configDir: options.configDir,
-  //   workingDir: process.cwd(),
-  // });
-
-  // let dir = path.relative(
-  //   __dirname,
-  //   path.join(process.cwd(), stories[0].directory)
-  // );
-  // let files = stories[0].files;
-
-  // let previewScript = `
-  //   import 'regenerator-runtime';
-  //   import {configure} from '@storybook/react';
-  //   import {
-  //     addDecorator,
-  //     addParameters,
-  //     addLoader,
-  //     addArgTypesEnhancer,
-  //     addArgsEnhancer
-  //   } from '@storybook/client-api';
-  //   import { logger } from '@storybook/client-logger';
-  //   import * as stories from '${path.join(dir, files)}';
-  //   ${configs
-  //     .map(
-  //       (config, i) =>
-  //         `import * as config_${i} from '${path.relative(__dirname, config)}';`
-  //     )
-  //     .join("\n")}
-  //   let configs = [${configs.map((_, i) => `config_${i}`)}];
-
-  //   configs.forEach(config => {
-  //     Object.keys(config).forEach((key) => {
-  //       const value = config[key];
-  //       switch (key) {
-  //         case 'args':
-  //         case 'argTypes': {
-  //           return logger.warn('Invalid args/argTypes in config, ignoring.', JSON.stringify(value));
-  //         }
-  //         case 'decorators': {
-  //           return value.forEach((decorator) => addDecorator(decorator, false));
-  //         }
-  //         case 'loaders': {
-  //           return value.forEach((loader) => addLoader(loader, false));
-  //         }
-  //         case 'parameters': {
-  //           return addParameters({ ...value }, false);
-  //         }
-  //         case 'argTypesEnhancers': {
-  //           return value.forEach((enhancer) => addArgTypesEnhancer(enhancer));
-  //         }
-  //         case 'argsEnhancers': {
-  //           return value.forEach((enhancer) => addArgsEnhancer(enhancer))
-  //         }
-  //         case 'globals':
-  //         case 'globalTypes': {
-  //           const v = {};
-  //           v[key] = value;
-  //           return addParameters(v, false);
-  //         }
-  //         case 'decorateStory':
-  //         case 'renderToDOM':
-  //         case 'render': {
-  //           return null; // This key is not handled directly in v6 mode.
-  //         }
-  //         default: {
-  //           // eslint-disable-next-line prefer-template
-  //           return console.log(key + ' was not supported :( !');
-  //         }
-  //       }
-  //     });
-  //   });
-
-  //   let keyMap = {};
-  //   function walk(obj, key) {
-  //     for (let k in obj) {
-  //       if (k === 'tsx' || k === 'ts' || k === 'js' || k === 'jsx') {
-  //         keyMap[key + '.' + k] = obj[k];
-  //       } else {
-  //         walk(obj[k], (key ? key + '/' : '') + k);
-  //       }
-  //     }
-  //   }
-
-  //   walk(stories);
-
-  //   function context(key) {
-  //     return keyMap[key];
-  //   }
-
-  //   context.keys = () => Object.keys(keyMap);
-  //   context.resolve = (key) => key;
-
-  //   configure(context, module, false);
-  // `;
-
-  let previewScript = await generateIframeScriptCode(options);
-
-  fs.writeFileSync(path.join(__dirname, "preview.js"), previewScript);
 }
