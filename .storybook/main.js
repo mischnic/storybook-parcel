@@ -1,12 +1,7 @@
 const path = require("path");
 module.exports = {
-  stories: ["../stories/**/*.mdx", "../stories/**/*.stories.@(js|jsx|ts|tsx)"],
+  stories: ["../stories/**/*.stories.@(js|jsx|ts|tsx)"],
   addons: ["@storybook/addon-essentials", "@storybook/addon-interactions"],
-  framework: {
-    name: "@storybook/react-vite",
-    options: {},
-  },
-  docs: {
-    docsPage: true,
-  },
+
+  framework: "storybook-react-parcel",
 };

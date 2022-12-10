@@ -1,17 +1,29 @@
 {
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "postinstall": "patch-package"
   },
-  "license": "ISC",
   "devDependencies": {
+    "@parcel/config-default": "^2.8.0",
+    "@parcel/resolver-glob": "^2.8.1",
     "@storybook/addon-essentials": "^7.0.0-beta.3",
     "@storybook/addon-interactions": "^7.0.0-beta.3",
+    "@storybook/builder-vite": "^7.0.0-beta.3",
+    "@storybook/builder-webpack5": "^7.0.0-beta.3",
     "@storybook/react": "^7.0.0-beta.3",
-    "@storybook/react-vite": "^7.0.0-beta.3",
-    "@storybook/testing-library": "^0.0.13",
+    "@storybook/react-webpack5": "^7.0.0-beta.3",
+    "parcel": "^2.8.0",
+    "patch-package": "^6.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "storybook": "^7.0.0-beta.3"
+    "storybook": "^7.0.0-beta.3",
+    "storybook-builder-parcel": "*",
+    "storybook-react-parcel": "*",
+    "typescript": "^4.9.4"
   }
 }
