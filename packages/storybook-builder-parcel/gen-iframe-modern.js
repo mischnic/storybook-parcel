@@ -26,7 +26,7 @@ const TEMPLATE = `<!DOCTYPE html>
     <!-- [BODY HTML SNIPPET HERE] -->
     <div id="storybook-root"></div>
     <div id="storybook-docs"></div>
-    <script type="module" src="npm:@storybook/preview/dist/runtime.mjs"></script>
+    <script type="module" src="npm:@storybook/preview/dist/runtime.js"></script>
     <script type="module" src="preview.js"></script>
   </body>
 </html>
