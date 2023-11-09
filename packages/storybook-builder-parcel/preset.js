@@ -122,7 +122,8 @@ async function createParcel(options, isDev = false) {
     defaultTargetOptions: {
       distDir: options.outputDir,
       publicUrl: "./",
-      shouldScopeHoist: false, // TODO
+      shouldScopeHoist: isDev ? false : true,
+      shouldOptimize: false // https://github.com/swc-project/swc/issues/8251
     },
   });
 }
