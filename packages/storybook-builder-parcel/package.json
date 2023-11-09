@@ -6,7 +6,7 @@
 		"@storybook/core-common": "6.5.12"
 	},
 	"dependencies": {
-		"@storybook/core-common": "7.0.0-beta.3",
+		"@storybook/core-common": "7.5.2",
 		"http-proxy-middleware": "^2.0.6"
 	},
 	"peerDependencies": {

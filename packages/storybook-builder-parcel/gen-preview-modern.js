@@ -67,20 +67,12 @@ module.exports.generatePreviewModern = async function generatePreviewModern(
   import { composeConfigs, PreviewWeb, ClientApi } from '@storybook/preview-api';
   
   // generateAddonSetupCode
-  import { createChannel as createPostMessageChannel } from '@storybook/channel-postmessage';
-  import { createChannel as createWebSocketChannel } from '@storybook/channel-websocket';
+  import { createBrowserChannel } from '@storybook/channels';
   import { addons } from '@storybook/preview-api';
 
-  const channel = createPostMessageChannel({ page: 'preview' });
+  const channel = createBrowserChannel({ page: 'preview' });
   addons.setChannel(channel);
   window.__STORYBOOK_ADDONS_CHANNEL__ = channel;
-
-  const { SERVER_CHANNEL_URL } = globalThis;
-  if (SERVER_CHANNEL_URL) {
-    const serverChannel = createWebSocketChannel({ url: SERVER_CHANNEL_URL });
-    addons.setServerChannel(serverChannel);
-    window.__STORYBOOK_SERVER_CHANNEL__ = serverChannel;
-  }
 
   ${
     // import { importFn } from '${virtualStoriesFile}';
