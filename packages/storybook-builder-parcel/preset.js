@@ -123,7 +123,6 @@ async function createParcel(options, isDev = false) {
       distDir: options.outputDir,
       publicUrl: "./",
       shouldScopeHoist: isDev ? false : true,
-      shouldOptimize: false // https://github.com/swc-project/swc/issues/8251
     },
   });
 }
