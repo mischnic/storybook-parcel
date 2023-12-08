@@ -3,6 +3,7 @@ const {
   loadPreviewOrConfigFile,
   getFrameworkName,
   normalizeStories,
+  stripAbsNodeModulesPath,
 } = require("@storybook/core-common");
 const { logger } = require("@storybook/node-logger");
 const { promise: glob } = require("glob-promise");
@@ -122,7 +123,7 @@ function processPreviewAnnotation(path) {
   // For addon dependencies that use require.resolve(), we need to convert to a bare path
   // so that vite will process it as a dependency (cjs -> esm, etc).
   if (path.includes("node_modules")) {
-    return transformAbsPath(path);
+    return stripAbsNodeModulesPath(path);
   }
 
   return /*slash*/ path;

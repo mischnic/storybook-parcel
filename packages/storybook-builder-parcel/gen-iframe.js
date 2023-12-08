@@ -49,8 +49,8 @@ module.exports.generateIframe = async function generateIframe(options) {
     </head>
     <body>
       ${bodyHtmlSnippet || ""}
-      <div id="root"></div>
-      <div id="docs-root"></div>
+      <div id="storybook-root"></div>
+      <div id="storybook-docs"></div>  
       <script src="preview.js" type="module"></script>
     </body>
   </html>

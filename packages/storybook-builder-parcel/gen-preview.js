@@ -4,7 +4,10 @@ const {
   loadPreviewOrConfigFile,
 } = require("@storybook/core-common");
 
-module.exports.generatePreview = async function generatePreview(options) {
+module.exports.generatePreview = async function generatePreview(
+  options,
+  generatedEntries
+) {
   let { presets } = options;
   let configs = [
     ...(await presets.apply("config", [], options)),
@@ -16,7 +19,7 @@ module.exports.generatePreview = async function generatePreview(options) {
   });
 
   let dir = path.relative(
-    __dirname,
+    generatedEntries,
     path.join(process.cwd(), stories[0].directory)
   );
   let files = stories[0].files;
@@ -36,7 +39,10 @@ module.exports.generatePreview = async function generatePreview(options) {
     ${configs
       .map(
         (config, i) =>
-          `import * as config_${i} from '${path.relative(__dirname, config)}';`
+          `import * as config_${i} from '${path.relative(
+            generatedEntries,
+            config
+          )}';`
       )
       .join("\n")}
     let configs = [${configs.map((_, i) => `config_${i}`)}];
