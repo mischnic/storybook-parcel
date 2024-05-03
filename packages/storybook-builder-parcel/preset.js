@@ -100,6 +100,10 @@ async function createParcel(options, isDev = false) {
   }
 
   return new Parcel({
+    /**
+     * There is a Segmentation Fault that occurs when reading from the cache.
+     */
+    shouldDisableCache: true,
     entries: path.join(generatedEntries, "iframe.html"),
     config: path.resolve(options.configDir, ".parcelrc"),
     mode: isDev ? "development" : "production",
