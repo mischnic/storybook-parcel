@@ -33,12 +33,12 @@ module.exports.generatePreviewModern = async function generatePreviewModern(
 
   const generateHMRHandler = (frameworkName) => {
     // Web components are not compatible with HMR, so disable HMR, reload page instead.
-    if (frameworkName === "@storybook/web-components-vite") {
-      return `
-      if (import.meta.hot) {
-        import.meta.hot.decline();
-      }`.trim();
-    }
+    // if (frameworkName === "@storybook/web-components-vite") {
+    //   return `
+    //   if (import.meta.hot) {
+    //     import.meta.hot.decline();
+    //   }`.trim();
+    // }
 
     return `
     if (import.meta.hot) {
