@@ -7,13 +7,10 @@ const {
 } = require("@storybook/core-common");
 const { logger } = require("@storybook/node-logger");
 const { promise: glob } = require("glob-promise");
-const isMingw = require('is-mingw');
 
 const absoluteToSpecifier = (generatedEntries, abs) => {
   let relativePath = path.relative(generatedEntries, abs);
-  if (isMingw()) {
-    relativePath = relativePath.replace(/\\/g, '/');
-  }
+  relativePath = relativePath.replaceAll(path.sep, path.posix.sep);
 
   return  "./" + relativePath;
 }
@@ -160,9 +157,7 @@ async function toImportFn(stories, generatedEntries) {
   const objectEntries = stories.map((file) => {
     const ext = path.extname(file);
     let relativePath = /*normalizePath*/ path.relative(process.cwd(), file);
-    if (isMingw()) {
-      relativePath = relativePath.replace(/\\/g, '/');
-    }
+    relativePath = relativePath.replaceAll(path.sep, path.posix.sep);
     if (![".js", ".jsx", ".ts", ".tsx", ".mdx"].includes(ext)) {
       logger.warn(
         `Cannot process ${ext} file with storyStoreV7: ${relativePath}`
