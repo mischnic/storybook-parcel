@@ -3,11 +3,13 @@ const { Resolver } = require("@parcel/plugin");
 const reactVersion = require("react-dom/package.json").version;
 const { default: NodeResolver } = require("@parcel/node-resolver-core");
 
+const REACT_MAJOR_VERSION = parseInt(reactVersion.split('.')[0], 10);
+
 module.exports = new Resolver({
   async resolve({ dependency, options, specifier, logger }) {
     // Workaround for interop issue
     if (specifier === "react-dom/client") {
-      let specifier = reactVersion.startsWith("18")
+      let specifier = REACT_MAJOR_VERSION >= 18
         ? "react-dom/client.js"
         : "react-dom/index.js";
       return {
