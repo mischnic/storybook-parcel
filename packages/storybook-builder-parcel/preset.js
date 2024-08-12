@@ -119,10 +119,14 @@ async function createParcel(options, isDev = false) {
         resolveFrom: __filename,
       },
     ],
-    defaultTargetOptions: {
-      distDir: options.outputDir,
-      publicUrl: "./",
-      shouldScopeHoist: isDev ? false : true,
-    },
+    targets: {
+      storybook: {
+        distDir: options.outputDir,
+        publicUrl: "./",
+        engines: {
+          browsers: ['last 2 Chrome version', 'last 2 Safari versions', 'last 2 Edge version', 'last 2 Firefox versions']
+        }
+      }
+    }
   });
 }
